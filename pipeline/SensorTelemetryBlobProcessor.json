@@ -49,6 +49,17 @@
 				}
 			}
 		],
+		"variables": {
+			"containerName": {
+				"type": "String"
+			},
+			"blobPath": {
+				"type": "String"
+			},
+			"blobName": {
+				"type": "String"
+			}
+		},
 		"annotations": []
 	}
 }
