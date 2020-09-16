@@ -1,0 +1,19 @@
+{
+	"name": "ProcessedSensorMessagesDWConnection",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDW",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=iomegasqlserverv2.database.windows.net;Initial Catalog=iomegasqlpool;User ID=iomegaadmin",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "PracticeKVConnection",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "sqlcredentials"
+			}
+		}
+	}
+}
