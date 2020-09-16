@@ -1,0 +1,24 @@
+{
+	"name": "ProcessSensorMessages1HourSchedule",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "SensorTelemetryBlobProcessor",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Hour",
+				"interval": 1,
+				"startTime": "2020-09-16T11:44:00.000Z",
+				"timeZone": "UTC"
+			}
+		}
+	}
+}
