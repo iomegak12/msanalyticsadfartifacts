@@ -6,85 +6,12 @@
 			"type": "string",
 			"metadata": "Data Factory name",
 			"defaultValue": "iomegadatafactory"
-		},
-		"PracticeSQLMetastoreConnection_connectionString": {
-			"type": "secureString",
-			"metadata": "Secure string for 'connectionString' of 'PracticeSQLMetastoreConnection'"
-		},
-		"PracticeRawDataStorageConnection_connectionString": {
-			"type": "secureString",
-			"metadata": "Secure string for 'connectionString' of 'PracticeRawDataStorageConnection'"
-		},
-		"ProcessedSensorMessagesDLSConnection_accountKey": {
-			"type": "secureString",
-			"metadata": "Secure string for 'accountKey' of 'ProcessedSensorMessagesDLSConnection'"
-		},
-		"PracticeKVConnection_properties_typeProperties_baseUrl": {
-			"type": "string",
-			"defaultValue": "https://iomegakv.vault.azure.net/"
-		},
-		"BlobPathProcessorFunctionConnection_properties_typeProperties_functionAppUrl": {
-			"type": "string",
-			"defaultValue": "https://blobpathprocessor20200916145509.azurewebsites.net"
-		},
-		"ProcessedSensorMessagesDLSConnection_properties_typeProperties_url": {
-			"type": "string",
-			"defaultValue": "https://iomegadls.dfs.core.windows.net"
 		}
 	},
 	"variables": {
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
-		{
-			"name": "[concat(parameters('factoryName'), '/PracticeKVConnection')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureKeyVault",
-				"typeProperties": {
-					"baseUrl": "[parameters('PracticeKVConnection_properties_typeProperties_baseUrl')]"
-				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/PracticeSQLMetastoreConnection')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureSqlDatabase",
-				"typeProperties": {
-					"connectionString": "[parameters('PracticeSQLMetastoreConnection_connectionString')]",
-					"password": {
-						"type": "AzureKeyVaultSecret",
-						"store": {
-							"referenceName": "PracticeKVConnection",
-							"type": "LinkedServiceReference"
-						},
-						"secretName": "sqlcredentials"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/PracticeKVConnection')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/PracticeRawDataStorageConnection')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureBlobStorage",
-				"typeProperties": {
-					"connectionString": "[parameters('PracticeRawDataStorageConnection_connectionString')]"
-				}
-			},
-			"dependsOn": []
-		},
 		{
 			"name": "[concat(parameters('factoryName'), '/SensorTelemetryBlobProcessor')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
@@ -112,8 +39,7 @@
 							},
 							"dataset": {
 								"referenceName": "ProcessableBlobMetadata",
-								"type": "DatasetReference",
-								"parameters": {}
+								"type": "DatasetReference"
 							},
 							"firstRowOnly": false
 						}
@@ -375,117 +301,8 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ProcessableBlobMetadata')]",
-				"[concat(variables('factoryId'), '/linkedServices/BlobPathProcessorFunctionConnection')]",
 				"[concat(variables('factoryId'), '/datasets/SensorMessagesCSV')]",
 				"[concat(variables('factoryId'), '/datasets/ProcessedSensorMessagesDLSDataset')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/ProcessableBlobMetadata')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "PracticeSQLMetastoreConnection",
-					"type": "LinkedServiceReference"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "RecordId",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "RecordDate",
-						"type": "datetime",
-						"precision": 23,
-						"scale": 3
-					},
-					{
-						"name": "BlobId",
-						"type": "nvarchar"
-					},
-					{
-						"name": "BlobName",
-						"type": "nvarchar"
-					},
-					{
-						"name": "DisplayName",
-						"type": "nvarchar"
-					},
-					{
-						"name": "Path",
-						"type": "nvarchar"
-					},
-					{
-						"name": "LastModified",
-						"type": "datetime",
-						"precision": 23,
-						"scale": 3
-					},
-					{
-						"name": "Size",
-						"type": "int",
-						"precision": 10
-					},
-					{
-						"name": "MediaType",
-						"type": "nvarchar"
-					},
-					{
-						"name": "IsFolder",
-						"type": "bit"
-					},
-					{
-						"name": "ETag",
-						"type": "nvarchar"
-					},
-					{
-						"name": "FileLocator",
-						"type": "nvarchar"
-					},
-					{
-						"name": "ProcessStatus",
-						"type": "nvarchar"
-					},
-					{
-						"name": "DLSTargetLocation",
-						"type": "nvarchar"
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "BlobMetadata"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/PracticeSQLMetastoreConnection')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/BlobPathProcessorFunctionConnection')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureFunction",
-				"typeProperties": {
-					"functionAppUrl": "[parameters('BlobPathProcessorFunctionConnection_properties_typeProperties_functionAppUrl')]",
-					"functionKey": {
-						"type": "AzureKeyVaultSecret",
-						"store": {
-							"referenceName": "PracticeKVConnection",
-							"type": "LinkedServiceReference"
-						},
-						"secretName": "blobprocessoraccesskey"
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/PracticeKVConnection')]"
 			]
 		},
 		{
@@ -562,9 +379,7 @@
 					}
 				]
 			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/PracticeRawDataStorageConnection')]"
-			]
+			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/ProcessedSensorMessagesDLSConnection')]",
@@ -574,10 +389,10 @@
 				"annotations": [],
 				"type": "AzureBlobFS",
 				"typeProperties": {
-					"url": "[parameters('ProcessedSensorMessagesDLSConnection_properties_typeProperties_url')]",
+					"url": "https://iomegadls.dfs.core.windows.net",
 					"accountKey": {
 						"type": "SecureString",
-						"value": "[parameters('ProcessedSensorMessagesDLSConnection_accountKey')]"
+						"value": "**********"
 					}
 				}
 			},

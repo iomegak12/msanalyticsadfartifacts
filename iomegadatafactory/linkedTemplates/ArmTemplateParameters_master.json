@@ -11,11 +11,17 @@
 		"PracticeRawDataStorageConnection_connectionString": {
 			"value": ""
 		},
+		"ProcessedSensorMessagesDLSConnection_accountKey": {
+			"value": ""
+		},
 		"PracticeKVConnection_properties_typeProperties_baseUrl": {
 			"value": "https://iomegakv.vault.azure.net/"
 		},
 		"BlobPathProcessorFunctionConnection_properties_typeProperties_functionAppUrl": {
 			"value": "https://blobpathprocessor20200916145509.azurewebsites.net"
+		},
+		"ProcessedSensorMessagesDLSConnection_properties_typeProperties_url": {
+			"value": "https://iomegadls.dfs.core.windows.net"
 		},
 		"containerUri": {
 			"value": ""

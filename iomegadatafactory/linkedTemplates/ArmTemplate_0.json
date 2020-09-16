@@ -11,6 +11,10 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'PracticeRawDataStorageConnection'"
 		},
+		"ProcessedSensorMessagesDLSConnection_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'ProcessedSensorMessagesDLSConnection'"
+		},
 		"PracticeSQLMetastoreConnection_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'PracticeSQLMetastoreConnection'"
@@ -18,6 +22,10 @@
 		"PracticeKVConnection_properties_typeProperties_baseUrl": {
 			"type": "string",
 			"defaultValue": "https://iomegakv.vault.azure.net/"
+		},
+		"ProcessedSensorMessagesDLSConnection_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://iomegadls.dfs.core.windows.net"
 		},
 		"BlobPathProcessorFunctionConnection_properties_typeProperties_functionAppUrl": {
 			"type": "string",
@@ -50,6 +58,23 @@
 				"type": "AzureBlobStorage",
 				"typeProperties": {
 					"connectionString": "[parameters('PracticeRawDataStorageConnection_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ProcessedSensorMessagesDLSConnection')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ProcessedSensorMessagesDLSConnection_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('ProcessedSensorMessagesDLSConnection_accountKey')]"
+					}
 				}
 			},
 			"dependsOn": []
@@ -98,6 +123,162 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/PracticeKVConnection')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/SensorMessagesCSV')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "PracticeRawDataStorageConnection",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"container": {
+						"type": "string"
+					},
+					"folder": {
+						"type": "string"
+					},
+					"blobName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@dataset().blobName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().folder",
+							"type": "Expression"
+						},
+						"container": {
+							"value": "@dataset().container",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Region",
+						"type": "String"
+					},
+					{
+						"name": "Plant",
+						"type": "String"
+					},
+					{
+						"name": "AverageTemperature",
+						"type": "String"
+					},
+					{
+						"name": "AverageHumidity",
+						"type": "String"
+					},
+					{
+						"name": "TemperatureDescription",
+						"type": "String"
+					},
+					{
+						"name": "ProcessedTime",
+						"type": "String"
+					},
+					{
+						"name": "PlantType",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/PracticeRawDataStorageConnection')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ProcessedSensorMessagesDLSDataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ProcessedSensorMessagesDLSConnection",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"fileSystemName": {
+						"type": "string"
+					},
+					"folder": {
+						"type": "string"
+					},
+					"fileName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().fileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().folder",
+							"type": "Expression"
+						},
+						"fileSystem": {
+							"value": "@dataset().fileSystemName",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Region",
+						"type": "String"
+					},
+					{
+						"name": "Plant",
+						"type": "String"
+					},
+					{
+						"name": "AverageTemperature",
+						"type": "String"
+					},
+					{
+						"name": "AverageHumidity",
+						"type": "String"
+					},
+					{
+						"name": "TemperatureDescription",
+						"type": "String"
+					},
+					{
+						"name": "ProcessedTime",
+						"type": "String"
+					},
+					{
+						"name": "PlantType",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ProcessedSensorMessagesDLSConnection')]"
 			]
 		},
 		{
@@ -303,6 +484,161 @@
 										"referenceName": "BlobPathProcessorFunctionConnection",
 										"type": "LinkedServiceReference"
 									}
+								},
+								{
+									"name": "Copy Data to DLS",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Execute Blob Path Processor",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"mappings": [
+												{
+													"source": {
+														"name": "Region",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "Region"
+													}
+												},
+												{
+													"source": {
+														"name": "Plant",
+														"type": "String"
+													},
+													"sink": {
+														"name": "Plant"
+													}
+												},
+												{
+													"source": {
+														"name": "AverageTemperature",
+														"type": "Int32"
+													},
+													"sink": {
+														"name": "AverageTemperature"
+													}
+												},
+												{
+													"source": {
+														"name": "AverageHumidity",
+														"type": "Int32"
+													},
+													"sink": {
+														"name": "AverageHumidity"
+													}
+												},
+												{
+													"source": {
+														"name": "TemperatureDescription",
+														"type": "String"
+													},
+													"sink": {
+														"name": "TemperatureDescription"
+													}
+												},
+												{
+													"source": {
+														"name": "ProcessedTime",
+														"type": "String"
+													},
+													"sink": {
+														"name": "ProcessedTime"
+													}
+												},
+												{
+													"source": {
+														"name": "PlantType",
+														"type": "String"
+													},
+													"sink": {
+														"name": "PlantType"
+													}
+												}
+											],
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "SensorMessagesCSV",
+											"type": "DatasetReference",
+											"parameters": {
+												"container": {
+													"value": "@activity('Execute Blob Path Processor').output.containerName",
+													"type": "Expression"
+												},
+												"folder": {
+													"value": "@activity('Execute Blob Path Processor').output.path",
+													"type": "Expression"
+												},
+												"blobName": {
+													"value": "@activity('Execute Blob Path Processor').output.blobName",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ProcessedSensorMessagesDLSDataset",
+											"type": "DatasetReference",
+											"parameters": {
+												"fileSystemName": "sensordata",
+												"folder": {
+													"value": "@activity('Execute Blob Path Processor').output.path",
+													"type": "Expression"
+												},
+												"fileName": {
+													"value": "@activity('Execute Blob Path Processor').output.blobName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
 								}
 							]
 						}
@@ -320,7 +656,9 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ProcessableBlobMetadata')]",
-				"[concat(variables('factoryId'), '/linkedServices/BlobPathProcessorFunctionConnection')]"
+				"[concat(variables('factoryId'), '/linkedServices/BlobPathProcessorFunctionConnection')]",
+				"[concat(variables('factoryId'), '/datasets/SensorMessagesCSV')]",
+				"[concat(variables('factoryId'), '/datasets/ProcessedSensorMessagesDLSDataset')]"
 			]
 		}
 	]
