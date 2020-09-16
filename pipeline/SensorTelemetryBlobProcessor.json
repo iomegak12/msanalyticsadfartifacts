@@ -45,14 +45,25 @@
 						"value": "@activity('Get Processable Bobs').output.value",
 						"type": "Expression"
 					},
-					"isSequential": true
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Set variable1",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"userProperties": []
+						},
+						{
+							"name": "Set variable2",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"userProperties": []
+						}
+					]
 				}
 			}
 		],
 		"variables": {
-			"containerName": {
-				"type": "String"
-			},
 			"blobPath": {
 				"type": "String"
 			},
