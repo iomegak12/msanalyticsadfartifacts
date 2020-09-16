@@ -359,6 +359,13 @@
 										}
 									}
 								},
+								"staging": {
+									"linkedService": {
+										"referenceName": "PracticeRawDataStorageConnection",
+										"type": "LinkedServiceReference"
+									},
+									"folderPath": "staging/polybasedata"
+								},
 								"compute": {
 									"coreCount": 8,
 									"computeType": "General"
