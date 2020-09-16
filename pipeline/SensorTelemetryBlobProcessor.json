@@ -24,7 +24,8 @@
 					"dataset": {
 						"referenceName": "ProcessableBlobMetadata",
 						"type": "DatasetReference"
-					}
+					},
+					"firstRowOnly": false
 				}
 			}
 		],
