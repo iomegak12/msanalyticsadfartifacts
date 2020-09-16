@@ -3,10 +3,18 @@
 	"properties": {
 		"type": "MappingDataFlow",
 		"typeProperties": {
-			"sources": [],
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "SensorMessagesCSV",
+						"type": "DatasetReference"
+					},
+					"name": "ReadSensorMessagesBlob"
+				}
+			],
 			"sinks": [],
 			"transformations": [],
-			"script": ""
+			"script": "source(output(\n\t\tRegion as string,\n\t\tPlant as string,\n\t\tAverageTemperature as string,\n\t\tAverageHumidity as string,\n\t\tTemperatureDescription as string,\n\t\tProcessedTime as string,\n\t\tPlantType as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false) ~> ReadSensorMessagesBlob"
 		}
 	}
 }

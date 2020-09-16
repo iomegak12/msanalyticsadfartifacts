@@ -7,13 +7,16 @@
 		},
 		"parameters": {
 			"container": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "processedsensormessages"
 			},
 			"folder": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "readings/2020/09/15/12"
 			},
 			"blobName": {
-				"type": "string"
+				"type": "string",
+				"defaultValue": "-1884015330_10432f21827f4fc29d0c101189327159_1.csv"
 			}
 		},
 		"annotations": [],
