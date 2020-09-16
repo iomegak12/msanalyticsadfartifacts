@@ -27,6 +27,26 @@
 					},
 					"firstRowOnly": false
 				}
+			},
+			{
+				"name": "Iterate Processable Blobs",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Processable Bobs",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get Processable Bobs').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true
+				}
 			}
 		],
 		"annotations": []
