@@ -269,6 +269,49 @@
 									}
 								}
 							]
+						},
+						{
+							"name": "Update Blob Metastore",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Copy Data to DLS",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[uspUpdateBlobMetadata]",
+								"storedProcedureParameters": {
+									"dlsLocation": {
+										"value": {
+											"value": "@concat('sensordata', '/', activity('Execute Blob Path Processor').output.path, '/', activity('Execute Blob Path Processor').output.blobName)",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"recordId": {
+										"value": {
+											"value": "@item().RecordId",
+											"type": "Expression"
+										},
+										"type": "Int32"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "PracticeSQLMetastoreConnection",
+								"type": "LinkedServiceReference"
+							}
 						}
 					]
 				}
