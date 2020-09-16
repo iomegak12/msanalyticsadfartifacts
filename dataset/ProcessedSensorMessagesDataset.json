@@ -1,0 +1,60 @@
+{
+	"name": "ProcessedSensorMessagesDataset",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ProcessedSensorMessagesDWConnection",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlDWTable",
+		"schema": [
+			{
+				"name": "Region",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Plant",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Temperature",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Humidity",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "Description",
+				"type": "nvarchar"
+			},
+			{
+				"name": "RecordedTime",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "PlantType",
+				"type": "nvarchar"
+			},
+			{
+				"name": "TempProcessStatus",
+				"type": "nvarchar"
+			},
+			{
+				"name": "HumidityProcessStatus",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PlantStatus",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "ProcessedSensorMessages"
+		}
+	}
+}
