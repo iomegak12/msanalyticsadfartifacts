@@ -1,0 +1,73 @@
+{
+	"name": "SensorMessagesCSV",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "PracticeRawDataStorageConnection",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"container": {
+				"type": "string"
+			},
+			"folder": {
+				"type": "string"
+			},
+			"blobName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@dataset().blobName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().folder",
+					"type": "Expression"
+				},
+				"container": {
+					"value": "@dataset().container",
+					"type": "Expression"
+				}
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "Region",
+				"type": "String"
+			},
+			{
+				"name": "Plant",
+				"type": "String"
+			},
+			{
+				"name": "AverageTemperature",
+				"type": "String"
+			},
+			{
+				"name": "AverageHumidity",
+				"type": "String"
+			},
+			{
+				"name": "TemperatureDescription",
+				"type": "String"
+			},
+			{
+				"name": "ProcessedTime",
+				"type": "String"
+			},
+			{
+				"name": "PlantType",
+				"type": "String"
+			}
+		]
+	}
+}
