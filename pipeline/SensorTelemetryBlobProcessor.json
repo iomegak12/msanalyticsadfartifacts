@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Get Processable Bobs",
+				"name": "Get Processable Blobs",
 				"type": "Lookup",
 				"dependsOn": [],
 				"policy": {
@@ -33,7 +33,7 @@
 				"type": "ForEach",
 				"dependsOn": [
 					{
-						"activity": "Get Processable Bobs",
+						"activity": "Get Processable Blobs",
 						"dependencyConditions": [
 							"Succeeded"
 						]
