@@ -279,6 +279,12 @@
 									"dependencyConditions": [
 										"Succeeded"
 									]
+								},
+								{
+									"activity": "PrepareProcessedSensorMessagesDF",
+									"dependencyConditions": [
+										"Succeeded"
+									]
 								}
 							],
 							"policy": {
@@ -311,6 +317,43 @@
 							"linkedServiceName": {
 								"referenceName": "PracticeSQLMetastoreConnection",
 								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "PrepareProcessedSensorMessagesDF",
+							"type": "ExecuteDataFlow",
+							"dependsOn": [
+								{
+									"activity": "Execute Blob Path Processor",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataflow": {
+									"referenceName": "PrepareProcessedSensorMessagesDF",
+									"type": "DataFlowReference",
+									"datasetParameters": {
+										"ReadSensorMessagesBlob": {
+											"container": "processedsensormessages",
+											"folder": "readings/2020/09/15/12",
+											"blobName": "-1884015330_10432f21827f4fc29d0c101189327159_1.csv"
+										}
+									}
+								},
+								"compute": {
+									"coreCount": 8,
+									"computeType": "General"
+								}
 							}
 						}
 					]
