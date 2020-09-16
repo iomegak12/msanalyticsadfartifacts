@@ -1,0 +1,19 @@
+{
+	"name": "PracticeSQLMetastoreConnection",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=iomegasqlserverv2.database.windows.net;Initial Catalog=iomegasqldatabasev2;User ID=iomegaadmin",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "PracticeKVConnection",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "sqlcredentials"
+			}
+		}
+	}
+}
