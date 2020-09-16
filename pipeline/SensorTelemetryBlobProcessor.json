@@ -145,7 +145,92 @@
 										"type": "DelimitedTextReadSettings"
 									}
 								},
-								"enableStaging": false
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"name": "Region",
+												"type": "String",
+												"physicalType": "String"
+											},
+											"sink": {
+												"name": "Region"
+											}
+										},
+										{
+											"source": {
+												"name": "Plant",
+												"type": "String"
+											},
+											"sink": {
+												"name": "Plant"
+											}
+										},
+										{
+											"source": {
+												"name": "AverageTemperature",
+												"type": "Int32"
+											},
+											"sink": {
+												"name": "AverageTemperature"
+											}
+										},
+										{
+											"source": {
+												"name": "AverageHumidity",
+												"type": "Int32"
+											},
+											"sink": {
+												"name": "AverageHumidity"
+											}
+										},
+										{
+											"source": {
+												"name": "TemperatureDescription",
+												"type": "String"
+											},
+											"sink": {
+												"name": "TemperatureDescription"
+											}
+										},
+										{
+											"source": {
+												"name": "ProcessedTime",
+												"type": "String"
+											},
+											"sink": {
+												"name": "ProcessedTime"
+											}
+										},
+										{
+											"source": {
+												"name": "PlantType",
+												"type": "String"
+											},
+											"sink": {
+												"name": "PlantType"
+											}
+										}
+									],
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
 							},
 							"inputs": [
 								{
@@ -161,6 +246,23 @@
 											"type": "Expression"
 										},
 										"blobName": {
+											"value": "@activity('Execute Blob Path Processor').output.blobName",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ProcessedSensorMessagesDLSDataset",
+									"type": "DatasetReference",
+									"parameters": {
+										"fileSystemName": "sensordata",
+										"folder": {
+											"value": "@activity('Execute Blob Path Processor').output.path",
+											"type": "Expression"
+										},
+										"fileName": {
 											"value": "@activity('Execute Blob Path Processor').output.blobName",
 											"type": "Expression"
 										}
