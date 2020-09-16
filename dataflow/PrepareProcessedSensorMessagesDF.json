@@ -10,11 +10,14 @@
 						"type": "DatasetReference"
 					},
 					"name": "ReadSensorMessagesBlob"
+				},
+				{
+					"name": "source1"
 				}
 			],
 			"sinks": [],
 			"transformations": [],
-			"script": "source(output(\n\t\tRegion as string,\n\t\tPlant as string,\n\t\tAverageTemperature as integer,\n\t\tAverageHumidity as integer,\n\t\tTemperatureDescription as string,\n\t\tProcessedTime as timestamp,\n\t\tPlantType as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false) ~> ReadSensorMessagesBlob"
+			"script": "source(output(\n\t\tRegion as string,\n\t\tPlant as string,\n\t\tAverageTemperature as integer,\n\t\tAverageHumidity as integer,\n\t\tTemperatureDescription as string,\n\t\tProcessedTime as timestamp,\n\t\tPlantType as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false) ~> ReadSensorMessagesBlob\nsource(allowSchemaDrift: true,\n\tvalidateSchema: false) ~> source1"
 		}
 	}
 }

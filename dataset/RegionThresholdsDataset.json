@@ -1,0 +1,35 @@
+{
+	"name": "RegionThresholdsDataset",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "PracticeSQLMetastoreConnection",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "Region",
+				"type": "nvarchar"
+			},
+			{
+				"name": "PlantType",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MTT",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "MTH",
+				"type": "int",
+				"precision": 10
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "RegionThresholds"
+		}
+	}
+}
