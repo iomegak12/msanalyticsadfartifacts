@@ -1,0 +1,73 @@
+{
+	"name": "ProcessedSensorMessagesDLSDataset",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ProcessedSensorMessagesDLSConnection",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"fileSystemName": {
+				"type": "string"
+			},
+			"folder": {
+				"type": "string"
+			},
+			"fileName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().fileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@dataset().folder",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().fileSystemName",
+					"type": "Expression"
+				}
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "Region",
+				"type": "String"
+			},
+			{
+				"name": "Plant",
+				"type": "String"
+			},
+			{
+				"name": "AverageTemperature",
+				"type": "String"
+			},
+			{
+				"name": "AverageHumidity",
+				"type": "String"
+			},
+			{
+				"name": "TemperatureDescription",
+				"type": "String"
+			},
+			{
+				"name": "ProcessedTime",
+				"type": "String"
+			},
+			{
+				"name": "PlantType",
+				"type": "String"
+			}
+		]
+	}
+}
