@@ -373,6 +373,12 @@
 											"dependencyConditions": [
 												"Succeeded"
 											]
+										},
+										{
+											"activity": "PrepareProcessedSensorMessagesDF",
+											"dependencyConditions": [
+												"Succeeded"
+											]
 										}
 									],
 									"policy": {
@@ -406,6 +412,62 @@
 										"referenceName": "PracticeSQLMetastoreConnection",
 										"type": "LinkedServiceReference"
 									}
+								},
+								{
+									"name": "PrepareProcessedSensorMessagesDF",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [
+										{
+											"activity": "Execute Blob Path Processor",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "PrepareProcessedSensorMessagesDF",
+											"type": "DataFlowReference",
+											"parameters": {},
+											"datasetParameters": {
+												"ReadSensorMessagesBlob": {
+													"container": {
+														"value": "@activity('Execute Blob Path Processor').output.containerName",
+														"type": "Expression"
+													},
+													"folder": {
+														"value": "@activity('Execute Blob Path Processor').output.path",
+														"type": "Expression"
+													},
+													"blobName": {
+														"value": "@activity('Execute Blob Path Processor').output.blobName",
+														"type": "Expression"
+													}
+												},
+												"RegionThresholdsDS": {},
+												"OutputToDW": {}
+											}
+										},
+										"staging": {
+											"linkedService": {
+												"referenceName": "PracticeRawDataStorageConnection",
+												"type": "LinkedServiceReference"
+											},
+											"folderPath": "staging/polybasedata"
+										},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										}
+									}
 								}
 							]
 						}
@@ -426,7 +488,9 @@
 				"[concat(variables('factoryId'), '/linkedServices/BlobPathProcessorFunctionConnection')]",
 				"[concat(variables('factoryId'), '/datasets/SensorMessagesCSV')]",
 				"[concat(variables('factoryId'), '/datasets/ProcessedSensorMessagesDLSDataset')]",
-				"[concat(variables('factoryId'), '/linkedServices/PracticeSQLMetastoreConnection')]"
+				"[concat(variables('factoryId'), '/linkedServices/PracticeSQLMetastoreConnection')]",
+				"[concat(variables('factoryId'), '/dataflows/PrepareProcessedSensorMessagesDF')]",
+				"[concat(variables('factoryId'), '/linkedServices/PracticeRawDataStorageConnection')]"
 			]
 		},
 		{

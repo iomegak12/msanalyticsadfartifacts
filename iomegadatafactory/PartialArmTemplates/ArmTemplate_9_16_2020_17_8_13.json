@@ -1,0 +1,408 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "iomegadatafactory"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/SensorTelemetryBlobProcessor')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Processable Bobs",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderStoredProcedureName": "[[dbo].[uspGetProcessableBlobs]",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "ProcessableBlobMetadata",
+								"type": "DatasetReference"
+							},
+							"firstRowOnly": false
+						}
+					},
+					{
+						"name": "Iterate Processable Blobs",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Processable Bobs",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get Processable Bobs').output.value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Set Blob Path",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "blobPath",
+										"value": {
+											"value": "@{item().Path}",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Set Blob Name",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "blobName",
+										"value": {
+											"value": "@{item().BlobName}",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Execute Blob Path Processor",
+									"type": "AzureFunctionActivity",
+									"dependsOn": [
+										{
+											"activity": "Set Blob Path",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										},
+										{
+											"activity": "Set Blob Name",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"functionName": "BlobPathProcessor",
+										"method": "POST",
+										"headers": {
+											"Content-Type": "application/json",
+											"Accept": "application/json"
+										},
+										"body": {
+											"value": "@json(concat('{\"blobPath\":\"', variables('blobPath'), '\", \"blobName\":\"', variables('blobName'), '\"}'))",
+											"type": "Expression"
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "BlobPathProcessorFunctionConnection",
+										"type": "LinkedServiceReference"
+									}
+								},
+								{
+									"name": "Copy Data to DLS",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Execute Blob Path Processor",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "DelimitedTextSource",
+											"storeSettings": {
+												"type": "AzureBlobStorageReadSettings",
+												"recursive": true
+											},
+											"formatSettings": {
+												"type": "DelimitedTextReadSettings"
+											}
+										},
+										"sink": {
+											"type": "DelimitedTextSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "DelimitedTextWriteSettings",
+												"quoteAllText": true,
+												"fileExtension": ".txt"
+											}
+										},
+										"enableStaging": false,
+										"translator": {
+											"type": "TabularTranslator",
+											"mappings": [
+												{
+													"source": {
+														"name": "Region",
+														"type": "String",
+														"physicalType": "String"
+													},
+													"sink": {
+														"name": "Region"
+													}
+												},
+												{
+													"source": {
+														"name": "Plant",
+														"type": "String"
+													},
+													"sink": {
+														"name": "Plant"
+													}
+												},
+												{
+													"source": {
+														"name": "AverageTemperature",
+														"type": "Int32"
+													},
+													"sink": {
+														"name": "AverageTemperature"
+													}
+												},
+												{
+													"source": {
+														"name": "AverageHumidity",
+														"type": "Int32"
+													},
+													"sink": {
+														"name": "AverageHumidity"
+													}
+												},
+												{
+													"source": {
+														"name": "TemperatureDescription",
+														"type": "String"
+													},
+													"sink": {
+														"name": "TemperatureDescription"
+													}
+												},
+												{
+													"source": {
+														"name": "ProcessedTime",
+														"type": "String"
+													},
+													"sink": {
+														"name": "ProcessedTime"
+													}
+												},
+												{
+													"source": {
+														"name": "PlantType",
+														"type": "String"
+													},
+													"sink": {
+														"name": "PlantType"
+													}
+												}
+											],
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "SensorMessagesCSV",
+											"type": "DatasetReference",
+											"parameters": {
+												"container": {
+													"value": "@activity('Execute Blob Path Processor').output.containerName",
+													"type": "Expression"
+												},
+												"folder": {
+													"value": "@activity('Execute Blob Path Processor').output.path",
+													"type": "Expression"
+												},
+												"blobName": {
+													"value": "@activity('Execute Blob Path Processor').output.blobName",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ProcessedSensorMessagesDLSDataset",
+											"type": "DatasetReference",
+											"parameters": {
+												"fileSystemName": "sensordata",
+												"folder": {
+													"value": "@activity('Execute Blob Path Processor').output.path",
+													"type": "Expression"
+												},
+												"fileName": {
+													"value": "@activity('Execute Blob Path Processor').output.blobName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "Update Blob Metastore",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [
+										{
+											"activity": "Copy Data to DLS",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										},
+										{
+											"activity": "PrepareProcessedSensorMessagesDF",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[[dbo].[uspUpdateBlobMetadata]",
+										"storedProcedureParameters": {
+											"dlsLocation": {
+												"value": {
+													"value": "@concat('sensordata', '/', activity('Execute Blob Path Processor').output.path, '/', activity('Execute Blob Path Processor').output.blobName)",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"recordId": {
+												"value": {
+													"value": "@item().RecordId",
+													"type": "Expression"
+												},
+												"type": "Int32"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "PracticeSQLMetastoreConnection",
+										"type": "LinkedServiceReference"
+									}
+								},
+								{
+									"name": "PrepareProcessedSensorMessagesDF",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [
+										{
+											"activity": "Execute Blob Path Processor",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "PrepareProcessedSensorMessagesDF",
+											"type": "DataFlowReference",
+											"datasetParameters": {
+												"ReadSensorMessagesBlob": {
+													"container": {
+														"value": "@activity('Execute Blob Path Processor').output.containerName",
+														"type": "Expression"
+													},
+													"folder": {
+														"value": "@activity('Execute Blob Path Processor').output.path",
+														"type": "Expression"
+													},
+													"blobName": {
+														"value": "@activity('Execute Blob Path Processor').output.blobName",
+														"type": "Expression"
+													}
+												}
+											}
+										},
+										"staging": {
+											"linkedService": {
+												"referenceName": "PracticeRawDataStorageConnection",
+												"type": "LinkedServiceReference"
+											},
+											"folderPath": "staging/polybasedata"
+										},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"variables": {
+					"blobPath": {
+						"type": "String"
+					},
+					"blobName": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		}
+	]
+}

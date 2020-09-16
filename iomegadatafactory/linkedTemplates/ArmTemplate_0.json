@@ -501,6 +501,61 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/PrepareProcessedSensorMessagesDF')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "SensorMessagesCSV",
+								"type": "DatasetReference"
+							},
+							"name": "ReadSensorMessagesBlob"
+						},
+						{
+							"dataset": {
+								"referenceName": "RegionThresholdsDataset",
+								"type": "DatasetReference"
+							},
+							"name": "RegionThresholdsDS"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ProcessedSensorMessagesDataset",
+								"type": "DatasetReference"
+							},
+							"name": "OutputToDW"
+						}
+					],
+					"transformations": [
+						{
+							"name": "LookupMaxTempHumiThreshold"
+						},
+						{
+							"name": "SelectPrimaryColumns"
+						},
+						{
+							"name": "PrepareTempProcessStatus"
+						},
+						{
+							"name": "PreparePlantStatus"
+						}
+					],
+					"script": "source(output(\n\t\tRegion as string,\n\t\tPlant as string,\n\t\tAverageTemperature as integer,\n\t\tAverageHumidity as integer,\n\t\tTemperatureDescription as string,\n\t\tProcessedTime as timestamp,\n\t\tPlantType as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false) ~> ReadSensorMessagesBlob\nsource(output(\n\t\tRegion as string,\n\t\tPlantType as string,\n\t\tMTT as integer,\n\t\tMTH as integer\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> RegionThresholdsDS\nReadSensorMessagesBlob, RegionThresholdsDS lookup(ReadSensorMessagesBlob@Region == RegionThresholdsDS@Region\n\t&& ReadSensorMessagesBlob@PlantType == RegionThresholdsDS@PlantType,\n\tmultiple: false,\n\tpickup: 'first',\n\tasc(RegionThresholdsDS@Region, true),\n\tasc(RegionThresholdsDS@PlantType, true),\n\tbroadcast: 'right')~> LookupMaxTempHumiThreshold\nLookupMaxTempHumiThreshold select(mapColumn(\n\t\tRegion = ReadSensorMessagesBlob@Region,\n\t\tPlant,\n\t\tAverageTemperature,\n\t\tAverageHumidity,\n\t\tTemperatureDescription,\n\t\tProcessedTime,\n\t\tPlantType = ReadSensorMessagesBlob@PlantType,\n\t\tMTT,\n\t\tMTH\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectPrimaryColumns\nSelectPrimaryColumns derive(TempProcessStatus = case(AverageTemperature > MTT, \"Warning\", \"Normal\"),\n\t\tHumiProcessStatus = case(AverageHumidity > MTH, \"Warning\", \"Normal\")) ~> PrepareTempProcessStatus\nPrepareTempProcessStatus derive(PlantStatus = case(TempProcessStatus == \"Warning\" && HumiProcessStatus == \"Warning\", \"Critical\", \r\n    TempProcessStatus == \"Warning\" || HumiProcessStatus == \"Warning\", \"Warning\", \"Normal\") ) ~> PreparePlantStatus\nPreparePlantStatus sink(input(\n\t\tRegion as string,\n\t\tPlant as string,\n\t\tTemperature as integer,\n\t\tHumidity as integer,\n\t\tDescription as string,\n\t\tRecordedTime as timestamp,\n\t\tPlantType as string,\n\t\tTempProcessStatus as string,\n\t\tHumidityProcessStatus as string,\n\t\tPlantStatus as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tstaged: true,\n\tmapColumn(\n\t\tRegion,\n\t\tPlant,\n\t\tTemperature = AverageTemperature,\n\t\tHumidity = AverageHumidity,\n\t\tDescription = TemperatureDescription,\n\t\tRecordedTime = ProcessedTime,\n\t\tPlantType,\n\t\tTempProcessStatus,\n\t\tHumidityProcessStatus = HumiProcessStatus,\n\t\tPlantStatus\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> OutputToDW"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/SensorMessagesCSV')]",
+				"[concat(variables('factoryId'), '/datasets/RegionThresholdsDataset')]",
+				"[concat(variables('factoryId'), '/datasets/ProcessedSensorMessagesDataset')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/SensorTelemetryBlobProcessor')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -784,6 +839,12 @@
 											"dependencyConditions": [
 												"Succeeded"
 											]
+										},
+										{
+											"activity": "PrepareProcessedSensorMessagesDF",
+											"dependencyConditions": [
+												"Succeeded"
+											]
 										}
 									],
 									"policy": {
@@ -817,6 +878,62 @@
 										"referenceName": "PracticeSQLMetastoreConnection",
 										"type": "LinkedServiceReference"
 									}
+								},
+								{
+									"name": "PrepareProcessedSensorMessagesDF",
+									"type": "ExecuteDataFlow",
+									"dependsOn": [
+										{
+											"activity": "Execute Blob Path Processor",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataflow": {
+											"referenceName": "PrepareProcessedSensorMessagesDF",
+											"type": "DataFlowReference",
+											"parameters": {},
+											"datasetParameters": {
+												"ReadSensorMessagesBlob": {
+													"container": {
+														"value": "@activity('Execute Blob Path Processor').output.containerName",
+														"type": "Expression"
+													},
+													"folder": {
+														"value": "@activity('Execute Blob Path Processor').output.path",
+														"type": "Expression"
+													},
+													"blobName": {
+														"value": "@activity('Execute Blob Path Processor').output.blobName",
+														"type": "Expression"
+													}
+												},
+												"RegionThresholdsDS": {},
+												"OutputToDW": {}
+											}
+										},
+										"staging": {
+											"linkedService": {
+												"referenceName": "PracticeRawDataStorageConnection",
+												"type": "LinkedServiceReference"
+											},
+											"folderPath": "staging/polybasedata"
+										},
+										"compute": {
+											"coreCount": 8,
+											"computeType": "General"
+										}
+									}
 								}
 							]
 						}
@@ -837,62 +954,9 @@
 				"[concat(variables('factoryId'), '/linkedServices/BlobPathProcessorFunctionConnection')]",
 				"[concat(variables('factoryId'), '/datasets/SensorMessagesCSV')]",
 				"[concat(variables('factoryId'), '/datasets/ProcessedSensorMessagesDLSDataset')]",
-				"[concat(variables('factoryId'), '/linkedServices/PracticeSQLMetastoreConnection')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/PrepareProcessedSensorMessagesDF')]",
-			"type": "Microsoft.DataFactory/factories/dataflows",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"type": "MappingDataFlow",
-				"typeProperties": {
-					"sources": [
-						{
-							"dataset": {
-								"referenceName": "SensorMessagesCSV",
-								"type": "DatasetReference"
-							},
-							"name": "ReadSensorMessagesBlob"
-						},
-						{
-							"dataset": {
-								"referenceName": "RegionThresholdsDataset",
-								"type": "DatasetReference"
-							},
-							"name": "RegionThresholdsDS"
-						}
-					],
-					"sinks": [
-						{
-							"dataset": {
-								"referenceName": "ProcessedSensorMessagesDataset",
-								"type": "DatasetReference"
-							},
-							"name": "OutputToDW"
-						}
-					],
-					"transformations": [
-						{
-							"name": "LookupMaxTempHumiThreshold"
-						},
-						{
-							"name": "SelectPrimaryColumns"
-						},
-						{
-							"name": "PrepareTempProcessStatus"
-						},
-						{
-							"name": "PreparePlantStatus"
-						}
-					],
-					"script": "source(output(\n\t\tRegion as string,\n\t\tPlant as string,\n\t\tAverageTemperature as integer,\n\t\tAverageHumidity as integer,\n\t\tTemperatureDescription as string,\n\t\tProcessedTime as timestamp,\n\t\tPlantType as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false) ~> ReadSensorMessagesBlob\nsource(output(\n\t\tRegion as string,\n\t\tPlantType as string,\n\t\tMTT as integer,\n\t\tMTH as integer\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> RegionThresholdsDS\nReadSensorMessagesBlob, RegionThresholdsDS lookup(ReadSensorMessagesBlob@Region == RegionThresholdsDS@Region\n\t&& ReadSensorMessagesBlob@PlantType == RegionThresholdsDS@PlantType,\n\tmultiple: false,\n\tpickup: 'first',\n\tasc(RegionThresholdsDS@Region, true),\n\tasc(RegionThresholdsDS@PlantType, true),\n\tbroadcast: 'right')~> LookupMaxTempHumiThreshold\nLookupMaxTempHumiThreshold select(mapColumn(\n\t\tRegion = ReadSensorMessagesBlob@Region,\n\t\tPlant,\n\t\tAverageTemperature,\n\t\tAverageHumidity,\n\t\tTemperatureDescription,\n\t\tProcessedTime,\n\t\tPlantType = ReadSensorMessagesBlob@PlantType,\n\t\tMTT,\n\t\tMTH\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectPrimaryColumns\nSelectPrimaryColumns derive(TempProcessStatus = case(AverageTemperature > MTT, \"Warning\", \"Normal\"),\n\t\tHumiProcessStatus = case(AverageHumidity > MTH, \"Warning\", \"Normal\")) ~> PrepareTempProcessStatus\nPrepareTempProcessStatus derive(PlantStatus = case(TempProcessStatus == \"Warning\" && HumiProcessStatus == \"Warning\", \"Critical\", \r\n    TempProcessStatus == \"Warning\" || HumiProcessStatus == \"Warning\", \"Warning\", \"Normal\") ) ~> PreparePlantStatus\nPreparePlantStatus sink(input(\n\t\tRegion as string,\n\t\tPlant as string,\n\t\tTemperature as integer,\n\t\tHumidity as integer,\n\t\tDescription as string,\n\t\tRecordedTime as timestamp,\n\t\tPlantType as string,\n\t\tTempProcessStatus as string,\n\t\tHumidityProcessStatus as string,\n\t\tPlantStatus as string\n\t),\n\tallowSchemaDrift: false,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tstaged: true,\n\tmapColumn(\n\t\tRegion,\n\t\tPlant,\n\t\tTemperature = AverageTemperature,\n\t\tHumidity = AverageHumidity,\n\t\tDescription = TemperatureDescription,\n\t\tRecordedTime = ProcessedTime,\n\t\tPlantType,\n\t\tTempProcessStatus,\n\t\tHumidityProcessStatus = HumiProcessStatus,\n\t\tPlantStatus\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> OutputToDW"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/SensorMessagesCSV')]",
-				"[concat(variables('factoryId'), '/datasets/RegionThresholdsDataset')]",
-				"[concat(variables('factoryId'), '/datasets/ProcessedSensorMessagesDataset')]"
+				"[concat(variables('factoryId'), '/linkedServices/PracticeSQLMetastoreConnection')]",
+				"[concat(variables('factoryId'), '/dataflows/PrepareProcessedSensorMessagesDF')]",
+				"[concat(variables('factoryId'), '/linkedServices/PracticeRawDataStorageConnection')]"
 			]
 		}
 	]
