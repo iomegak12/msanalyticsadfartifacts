@@ -7,9 +7,21 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "iomegadatafactory"
 		},
+		"PracticeSQLMetastoreConnection_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'PracticeSQLMetastoreConnection'"
+		},
+		"PracticeRawDataStorageConnection_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'PracticeRawDataStorageConnection'"
+		},
 		"PracticeKVConnection_properties_typeProperties_baseUrl": {
 			"type": "string",
 			"defaultValue": "https://iomegakv.vault.azure.net/"
+		},
+		"BlobPathProcessorFunctionConnection_properties_typeProperties_functionAppUrl": {
+			"type": "string",
+			"defaultValue": "https://blobpathprocessor20200916145509.azurewebsites.net"
 		},
 		"containerUri": {
 			"type": "string",
@@ -38,8 +50,17 @@
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
 					},
+					"PracticeRawDataStorageConnection_connectionString": {
+						"value": "[parameters('PracticeRawDataStorageConnection_connectionString')]"
+					},
+					"PracticeSQLMetastoreConnection_connectionString": {
+						"value": "[parameters('PracticeSQLMetastoreConnection_connectionString')]"
+					},
 					"PracticeKVConnection_properties_typeProperties_baseUrl": {
 						"value": "[parameters('PracticeKVConnection_properties_typeProperties_baseUrl')]"
+					},
+					"BlobPathProcessorFunctionConnection_properties_typeProperties_functionAppUrl": {
+						"value": "[parameters('BlobPathProcessorFunctionConnection_properties_typeProperties_functionAppUrl')]"
 					}
 				}
 			},

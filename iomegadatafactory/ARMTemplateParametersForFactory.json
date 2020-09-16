@@ -5,8 +5,17 @@
 		"factoryName": {
 			"value": "iomegadatafactory"
 		},
+		"PracticeSQLMetastoreConnection_connectionString": {
+			"value": ""
+		},
+		"PracticeRawDataStorageConnection_connectionString": {
+			"value": ""
+		},
 		"PracticeKVConnection_properties_typeProperties_baseUrl": {
 			"value": "https://iomegakv.vault.azure.net/"
+		},
+		"BlobPathProcessorFunctionConnection_properties_typeProperties_functionAppUrl": {
+			"value": "https://blobpathprocessor20200916145509.azurewebsites.net"
 		}
 	}
 }
